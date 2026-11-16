@@ -31,6 +31,7 @@ async function main() {
   const limit = Number(opt("limit") ?? Infinity);
   const tag = opt("tag") ?? null;
   const onlyBrand = opt("brand");
+  const delayMs = Number(opt("delay") ?? 0) * 1000; // pause between briefs to stay under provider rate limits
 
   const dir = path.resolve("evals/briefs");
   let briefs: Brief[] = readdirSync(dir).filter((f) => f.endsWith(".json")).sort()
@@ -63,7 +64,8 @@ async function main() {
   console.log(`eval ${runId.slice(0, 8)} · ${POST_PROMPT_VERSION} · ${briefs.length} briefs${dry ? " · dry" : ""}${noDb ? " · no-db" : ""}`);
   let passed = 0;
 
-  for (const b of briefs) {
+  for (const [n, b] of briefs.entries()) {
+    if (n > 0 && delayMs && !dry) await new Promise((r) => setTimeout(r, delayMs));
     const model = BRANDS[b.brand];
     if (!model) throw new Error(`${b.id}: unknown brand "${b.brand}" (see evals/fixtures.ts)`);
     const platforms = b.platforms as import("../lib/types").Platform[];
